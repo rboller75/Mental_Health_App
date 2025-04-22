@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './Dashboard.css'; // Optional if you'd like separate styling
 
 const sampleQuotes = [
   "You are stronger than you think.",
@@ -79,7 +78,9 @@ function Dashboard({ onLogout }) {
 
       <button className="primary-button" onClick={onLogout} style={{ marginTop: '2rem' }}>
         Logout
-        </button>
+      </button>
     </div>
-    );
+  );
 }
+
+export default Dashboard;
