@@ -1,24 +1,37 @@
 import { useState, useEffect } from 'react';
 
-const sampleQuotes = [
-  "You are stronger than you think.",
-  "Every day is a fresh start.",
-  "Be kind to your mind.",
-  "Your feelings are valid.",
-  "Small steps every day."
-];
-
 function Dashboard({ onLogout }) {
   const [goals, setGoals] = useState([]);
   const [goalInput, setGoalInput] = useState('');
   const [journalEntry, setJournalEntry] = useState('');
   const [entries, setEntries] = useState([]);
   const [quote, setQuote] = useState('');
+  const [mood, setMood] = useState('Happy'); // Default mood
 
+  // Load journal entries from localStorage on component mount
   useEffect(() => {
-    const random = sampleQuotes[Math.floor(Math.random() * sampleQuotes.length)];
-    setQuote(random);
+    const savedEntries = localStorage.getItem('journalEntries');
+    if (savedEntries) {
+      setEntries(JSON.parse(savedEntries));
+    }
+    fetchRandomQuote(); // Fetch a random quote when the user logs in
   }, []);
+
+  // Save journal entries to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('journalEntries', JSON.stringify(entries));
+  }, [entries]);
+
+  const fetchRandomQuote = async () => {
+    try {
+      const response = await fetch('https://api.quotable.io/random'); // Fetch a random quote
+      const data = await response.json();
+      setQuote(data.content); // Set the quote text
+    } catch (error) {
+      console.error('Error fetching quote:', error);
+      setQuote('Stay positive and keep moving forward!'); // Fallback quote
+    }
+  };
 
   const addGoal = () => {
     if (goalInput.trim() !== '') {
@@ -29,7 +42,7 @@ function Dashboard({ onLogout }) {
 
   const addJournalEntry = () => {
     if (journalEntry.trim() !== '') {
-      setEntries([{ text: journalEntry, date: new Date().toLocaleDateString() }, ...entries]);
+      setEntries([{ text: journalEntry, date: new Date().toLocaleDateString(), mood }, ...entries]);
       setJournalEntry('');
     }
   };
@@ -38,11 +51,33 @@ function Dashboard({ onLogout }) {
     <div className="dashboard-container">
       <h2>Your Mental Health Dashboard</h2>
 
+      {/* Mood of the Day Section */}
+      <div className="section mood">
+        <h3>Mood of the Day</h3>
+        <select
+          value={mood}
+          onChange={(e) => setMood(e.target.value)}
+          className="mood-select"
+        >
+          <option value="Happy">Happy</option>
+          <option value="Calm">Calm</option>
+          <option value="Motivated">Motivated</option>
+          <option value="Anxious">Anxious</option>
+          <option value="Sad">Sad</option>
+        </select>
+        <p>Your current mood: <strong>{mood}</strong></p>
+      </div>
+
+      {/* Motivational Quote Section */}
       <div className="section quote">
         <h3>Motivational Quote</h3>
         <p>{quote}</p>
+        <button className="primary-button" onClick={fetchRandomQuote}>
+          Generate New Quote
+        </button>
       </div>
 
+      {/* Daily Goals Section */}
       <div className="section goals">
         <h3>Daily Goals</h3>
         <input
@@ -59,6 +94,7 @@ function Dashboard({ onLogout }) {
         </ul>
       </div>
 
+      {/* Journal Entry Section */}
       <div className="section journal">
         <h3>Journal Entry</h3>
         <textarea
@@ -68,9 +104,10 @@ function Dashboard({ onLogout }) {
           placeholder="Write your thoughts here..."
         />
         <button className="primary-button" onClick={addJournalEntry}>Save Entry</button>
+        <h4>Past Journal Entries</h4>
         {entries.map((entry, index) => (
           <div key={index} className="journal-entry">
-            <strong>{entry.date}</strong>
+            <strong>{entry.date} - Mood: {entry.mood}</strong>
             <p>{entry.text}</p>
           </div>
         ))}
